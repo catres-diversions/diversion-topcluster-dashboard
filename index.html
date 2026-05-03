@@ -472,11 +472,7 @@ function renderSidebar(c, activeArcs) {
     <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `# Diversions originally scheduled to ${c.dest}` : 'System-wide'}</div>
     ${alRows}
 
-    <div class="sec-lbl" style="margin-top:14px">${currentView === 'dest' ? 'Diversion Breakdown' : 'Destinations Affected (top 10)'}</div>
-    <div style="font-size:9px;color:var(--muted);margin-bottom:6px;font-family:'Space Mono',monospace">CODE — COUNT — COMMON DIV AIRPORT</div>
-    ${dtRows}
-
-    
+       
   `;
 }
 
