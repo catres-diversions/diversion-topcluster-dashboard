@@ -301,7 +301,7 @@ function renderCluster(idx) {
   document.getElementById('mi-arcs').textContent = arcs.length.toLocaleString();
   document.getElementById('mi-total').textContent = c.totalDiversions.toLocaleString();
   document.getElementById('mi-arcs-lbl').textContent =
-    currentView === 'dest' ? `Diverted flights originally scheduled to ${c.dest}` : 'none';
+    currentView === 'dest' ? `Diverted flights originally scheduled to ${c.dest}` : 'Total diversions in the NAS';
   document.getElementById('mi-legend-dest').style.display   = currentView === 'dest'   ? 'block' : 'none';
   document.getElementById('mi-legend-system').style.display = currentView === 'system' ? 'block' : 'none';
 
@@ -441,7 +441,7 @@ function renderSidebar(c, activeArcs) {
 
   const contextHtml = currentView === 'dest'
     ? `<div class="view-context"><strong>${activeArcs.length.toLocaleString()} flights</strong> originally scheduled to arrive at <strong>${c.dest}</strong> were diverted during this period. This view shows those routes and where they actually landed.</div>`
-    : `<div class="view-context"><strong>${c.totalDiversions.toLocaleString()} total diversions</strong> system-wide during this period. <strong>${c.pctToMain.toFixed(1)}%</strong> were headed to ${c.dest} — the remaining arcs show concurrent network disruption.</div>`;
+    : `<div class="view-context">There were <strong>${c.totalDiversions.toLocaleString()} total diversions</strong> system-wide during this period. <strong>${c.pctToMain.toFixed(1)}%</strong> were originally scheduled to arrive at ${c.dest}; the remainder reflect concurrent disruptions elsewhere in the network.</div>`;
 
   document.getElementById('sidebar-scroll').innerHTML = `
     <div class="sec-lbl">Cluster Summary</div>
