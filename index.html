@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight Diversion Cluster Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060b14; --surface: #0d1520; --surface2: #131e2e; --surface3: #1a2840;
+  --border: rgba(255,255,255,0.07); --text: #e8edf5; --muted: #5a6a80;
+  --accent: #3b82f6; --red: #ef4444; --amber: #f59e0b; --green: #22c55e; --gold: #fbbf24;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; overflow: hidden; }
+
+#app { display: grid; grid-template-rows: 54px 1fr; height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+header h1 { font-size: 14px; font-weight: 600; }
+header .sub { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+/* view mode toggle */
+#view-toggle {
+  display: flex; gap: 2px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px; margin: 0 auto;
+}
+.vtab {
+  padding: 5px 16px; border-radius: 4px; font-size: 11px; font-family: 'Space Mono', monospace;
+  cursor: pointer; border: none; background: transparent; color: var(--muted);
+  transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
+}
+.vtab:hover { color: var(--text); }
+.vtab.active { background: var(--accent); color: white; }
+
+.cluster-tabs { display: flex; gap: 3px; flex-shrink: 0; }
+.ctab {
+  padding: 5px 12px; border-radius: 4px; font-size: 11px; font-family: 'Space Mono', monospace;
+  cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+  transition: all 0.12s; letter-spacing: 0.04em;
+}
+.ctab:hover { background: var(--surface2); color: var(--text); }
+.ctab.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* ── BODY ── */
+#body { display: grid; grid-template-columns: 320px 1fr; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+#sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+#sidebar-scroll { flex: 1; overflow-y: auto; padding: 14px; }
+
+.sec-lbl {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  padding-bottom: 5px; border-bottom: 1px solid var(--border);
+}
+
+.cluster-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 12px; margin-bottom: 14px; }
+.dest-code { font-family: 'Space Mono', monospace; font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+.dest-sub { font-size: 10px; color: var(--muted); margin-bottom: 10px; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+.date-range {
+  font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text);
+  background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+  padding: 4px 8px; border-radius: 3px; margin-bottom: 10px; letter-spacing: 0.04em;
+}
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.kv:last-child { border: none; }
+.kk { color: var(--muted); }
+.kv .vv { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12px; }
+.vv.big { font-size: 20px; color: var(--accent); }
+
+.view-context {
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: 5px; padding: 8px 10px; margin-bottom: 12px;
+  font-size: 10px; line-height: 1.65; color: var(--muted);
+}
+.view-context strong { color: var(--text); font-weight: 600; }
+
+.scope-badge {
+  display: inline-block; font-family: 'Space Mono', monospace; font-size: 8px;
+  letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px;
+  border-radius: 3px; margin-top: 8px;
+}
+.scope-local   { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.scope-regional{ background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.scope-wide    { background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+
+.al-row { display: flex; align-items: center; gap: 7px; padding: 4px 0; font-size: 11px; }
+.al-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.al-name { flex: 1; }
+.al-bar-wrap { width: 50px; height: 3px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.al-bar { height: 100%; border-radius: 2px; }
+.al-count { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); min-width: 28px; text-align: right; }
+
+.dt-row { display: flex; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 10px; align-items: center; }
+.dt-row:last-child { border: none; }
+.dt-code { font-family: 'Space Mono', monospace; font-weight: 700; min-width: 34px; }
+.dt-bar-wrap { flex: 1; height: 3px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.dt-bar { height: 100%; border-radius: 2px; background: var(--amber); }
+.dt-count { font-family: 'Space Mono', monospace; color: var(--muted); min-width: 28px; text-align: right; }
+.dt-div { color: var(--muted); font-size: 9px; min-width: 28px; text-align: right; }
+
+.toggle-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 11px; cursor: pointer; }
+.toggle-box {
+  width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; transition: background 0.12s;
+}
+.toggle-box.on { background: var(--accent); border-color: var(--accent); }
+.toggle-label { flex: 1; }
+
+#sb-foot { padding: 10px 14px; border-top: 1px solid var(--border); font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace; line-height: 1.7; }
+
+/* ── MAP ── */
+#map-wrap { position: relative; overflow: hidden; }
+#map { width: 100%; height: 100%; }
+.leaflet-container { background: #060b14; }
+.leaflet-tile { filter: brightness(0.45) saturate(0.25); }
+.leaflet-control-zoom { border: 1px solid var(--border) !important; border-radius: 5px !important; overflow: hidden; box-shadow: none !important; }
+.leaflet-control-zoom a { background: var(--surface) !important; color: var(--muted) !important; border-bottom: 1px solid var(--border) !important; width: 26px !important; height: 26px !important; line-height: 26px !important; font-size: 14px !important; }
+.leaflet-control-zoom a:hover { background: var(--surface2) !important; color: var(--text) !important; }
+.leaflet-control-attribution { background: rgba(6,11,20,0.8) !important; color: var(--muted) !important; font-size: 9px !important; }
+.leaflet-popup-content-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); padding: 0; }
+.leaflet-popup-content { margin: 0 !important; width: auto !important; }
+.leaflet-popup-tip { background: var(--surface); }
+.leaflet-popup-close-button { color: var(--muted) !important; top: 6px !important; right: 8px !important; }
+.mpop { padding: 12px 14px; min-width: 170px; }
+.mpop-code { font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.mpop-type { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.mpop-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.mpop-row:last-child { border: none; }
+.mpop-k { color: var(--muted); }
+.mpop-v { font-family: 'Space Mono', monospace; font-weight: 700; }
+
+/* map info overlay */
+#map-info {
+  position: absolute; top: 12px; right: 12px; z-index: 1000;
+  background: rgba(13,21,32,0.92); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 12px; font-size: 10px; color: var(--muted);
+  backdrop-filter: blur(4px); min-width: 160px;
+}
+.mi-stat { margin-bottom: 8px; }
+.mi-val { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--text); display: block; line-height: 1; margin-bottom: 2px; }
+.mi-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; }
+.mi-leg { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 10px; }
+.mi-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mi-line { width: 20px; height: 2px; flex-shrink: 0; }
+.mi-divider { border-top: 1px solid var(--border); margin: 6px 0; }
+
+/* loading */
+#loading {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.4s;
+}
+#loading.done { opacity: 0; pointer-events: none; }
+#loading h2 { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 6px; }
+#loading p { font-size: 11px; color: var(--muted); }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="loading"><h2>FLIGHT DIVERSION ATLAS</h2><p>Loading cluster data…</p></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">✈</div>
+      <h1>Diversion Cluster Events</h1>
+      <span class="sub">US Domestic · 2021–2024</span>
+    </div>
+
+    <div id="view-toggle">
+      <button class="vtab active" id="vtab-dest" onclick="setView('dest')">→ Dest Airport Only</button>
+      <button class="vtab" id="vtab-system" onclick="setView('system')">⊕ System-Wide</button>
+    </div>
+
+    <div class="cluster-tabs" id="cluster-tabs"></div>
+  </header>
+
+  <div id="body">
+    <aside id="sidebar">
+      <div id="sidebar-scroll"></div>
+      <div id="sb-foot">Click any airport for details</div>
+    </aside>
+    <div id="map-wrap">
+      <div id="map"></div>
+      <div id="map-info">
+        <div class="mi-stat">
+          <span class="mi-val" id="mi-arcs">—</span>
+          <span class="mi-lbl" id="mi-arcs-lbl">Flight arcs shown</span>
+        </div>
+        <div class="mi-stat">
+          <span class="mi-val" id="mi-total">—</span>
+          <span class="mi-lbl">System-wide total</span>
+        </div>
+        <div class="mi-divider"></div>
+        <div id="mi-legend-dest">
+          <div class="mi-leg"><div class="mi-dot" style="background:#fbbf24;border:1.5px solid #f59e0b"></div> Cluster destination</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diversion airports</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#94a3b8;opacity:0.7"></div> Origin airports</div>
+          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Arc by airline color</div>
+        </div>
+        <div id="mi-legend-system" style="display:none">
+          <div class="mi-leg"><div class="mi-dot" style="background:#fbbf24;border:1.5px solid #f59e0b"></div> Main cluster dest</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#22c55e"></div> Other intended dests</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diversion airports</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#94a3b8;opacity:0.7"></div> Origins</div>
+          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Arc by airline color</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let CLUSTERS = [];
+let currentIdx = 0;
+let currentView = 'dest';
+const layerVis = { arcs: true, origins: true, diverts: true, dests: true };
+
+const map = L.map('map', { center: [38.5, -95], zoom: 4, zoomControl: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 18
+}).addTo(map);
+
+let arcLayer    = L.layerGroup().addTo(map);
+let markerLayer = L.layerGroup().addTo(map);
+
+// ── BEZIER ───────────────────────────────────────────────────────────────────
+// Draws a quadratic Bezier curve between two lat/lon points for flight arc rendering.
+// The control point is offset perpendicular to the midpoint to create a curved arc.
+function bezier(oLat, oLon, dLat, dLon, n = 60) {
+  const mLat = (oLat + dLat) / 2, mLon = (oLon + dLon) / 2;
+  const dx = dLon - oLon, dy = dLat - oLat;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const off = dist * 0.22;
+  const cLat = dist > 0 ? mLat + off * (dx / dist) * 0.18 : mLat;
+  const cLon = dist > 0 ? mLon - off * (dy / dist) * 0.18 : mLon;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    pts.push([(1-t)**2 * oLat + 2*(1-t)*t * cLat + t**2 * dLat,
+              (1-t)**2 * oLon + 2*(1-t)*t * cLon + t**2 * dLon]);
+  }
+  return pts;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+// Main render function — clears and redraws all map layers for the selected cluster
+// and view mode. Called on cluster tab change, view toggle, and layer toggle.
+function renderCluster(idx) {
+  arcLayer.clearLayers();
+  markerLayer.clearLayers();
+  const c = CLUSTERS[idx];
+
+  // Dest-only = flights that were headed to the main cluster destination
+  // System-wide = all diversions during the cluster time window
+  const arcs = currentView === 'dest'
+    ? c.flightArcs.filter(a => a.isMainDest)
+    : c.flightArcs;
+
+  // Update info overlay
+  document.getElementById('mi-arcs').textContent = arcs.length.toLocaleString();
+  document.getElementById('mi-total').textContent = c.totalDiversions.toLocaleString();
+  document.getElementById('mi-arcs-lbl').textContent =
+    currentView === 'dest' ? `Flights to ${c.dest}` : 'System-wide arcs';
+  document.getElementById('mi-legend-dest').style.display   = currentView === 'dest'   ? 'block' : 'none';
+  document.getElementById('mi-legend-system').style.display = currentView === 'system' ? 'block' : 'none';
+
+  // Pre-compute counts from active arc set
+  const originCounts = {}, divCounts = {};
+  for (const arc of arcs) {
+    originCounts[arc.origin]   = (originCounts[arc.origin]   || 0) + 1;
+    divCounts[arc.diversion]   = (divCounts[arc.diversion]   || 0) + 1;
+  }
+  const activeOriginSet   = new Set(arcs.map(a => a.origin));
+  const activeDivSet      = new Set(arcs.map(a => a.diversion));
+
+  // Arcs
+  if (layerVis.arcs) {
+    for (const arc of arcs) {
+      L.polyline(bezier(arc.oLat, arc.oLon, arc.dLat, arc.dLon), {
+        color: arc.color, weight: 1, opacity: 0.35,
+      }).bindTooltip(
+        `${arc.origin} → ${arc.diversion}<br>Intended: ${arc.intended}<br>${arc.airline}`,
+        { sticky: true }
+      ).addTo(arcLayer);
+    }
+  }
+
+  // Origin markers — only show airports present in active arc set
+  if (layerVis.origins) {
+    for (const o of c.origins) {
+      if (!activeOriginSet.has(o.code)) continue;
+      L.circleMarker([o.lat, o.lon], {
+        radius: 4, fillColor: '#94a3b8', color: 'rgba(255,255,255,0.2)', weight: 1, fillOpacity: 0.6,
+      }).bindPopup(`<div class="mpop">
+        <div class="mpop-code">${o.code}</div>
+        <div class="mpop-type">Origin Airport</div>
+        <div class="mpop-row"><span class="mpop-k">Departures diverted</span><span class="mpop-v">${originCounts[o.code]}</span></div>
+      </div>`).addTo(markerLayer);
+    }
+  }
+
+  // Diversion airport markers — sized by flights accepted in active arc set
+  if (layerVis.diverts) {
+    for (const d of c.divAirports) {
+      if (!activeDivSet.has(d.code)) continue;
+      const cnt = divCounts[d.code] || 0;
+      const r = 6 + Math.sqrt(cnt) * 1.2;
+      L.circleMarker([d.lat, d.lon], {
+        radius: r, fillColor: '#ef4444', color: 'rgba(255,80,80,0.4)', weight: 1.5, fillOpacity: 0.8,
+      }).bindPopup(`<div class="mpop">
+        <div class="mpop-code">${d.code}</div>
+        <div class="mpop-type">Diversion Airport</div>
+        <div class="mpop-row"><span class="mpop-k">Flights accepted</span><span class="mpop-v">${cnt}</span></div>
+      </div>`).addTo(markerLayer);
+    }
+  }
+
+  // Destination markers
+  if (layerVis.dests) {
+    // Main cluster destination always visible — gold
+    for (const d of c.mainDest) {
+      const cnt = arcs.filter(a => a.intended === d.code).length;
+      L.circleMarker([d.lat, d.lon], {
+        radius: 13, fillColor: '#fbbf24', color: '#f59e0b', weight: 2, fillOpacity: 0.95,
+      }).bindPopup(`<div class="mpop">
+        <div class="mpop-code">${d.code}</div>
+        <div class="mpop-type">Main Cluster Destination</div>
+        <div class="mpop-row"><span class="mpop-k">Diversions intended here</span><span class="mpop-v">${cnt}</span></div>
+        <div class="mpop-row"><span class="mpop-k">% of system total</span><span class="mpop-v">${c.pctToMain.toFixed(1)}%</span></div>
+      </div>`).addTo(markerLayer);
+    }
+    // Other destinations only in system-wide view — green
+    if (currentView === 'system') {
+      for (const d of c.otherDests) {
+        const cnt = arcs.filter(a => a.intended === d.code).length;
+        if (cnt === 0) continue;
+        L.circleMarker([d.lat, d.lon], {
+          radius: 7, fillColor: '#22c55e', color: 'rgba(34,197,94,0.4)', weight: 1, fillOpacity: 0.75,
+        }).bindPopup(`<div class="mpop">
+          <div class="mpop-code">${d.code}</div>
+          <div class="mpop-type">Other Intended Destination</div>
+          <div class="mpop-row"><span class="mpop-k">Diversions intended here</span><span class="mpop-v">${cnt}</span></div>
+        </div>`).addTo(markerLayer);
+      }
+    }
+  }
+
+  // Fit map bounds to visible points
+  const pts = currentView === 'dest'
+    ? [...c.origins.filter(o => activeOriginSet.has(o.code)).map(o => [o.lat, o.lon]),
+       ...c.mainDest.map(d => [d.lat, d.lon]),
+       ...c.divAirports.filter(d => activeDivSet.has(d.code)).map(d => [d.lat, d.lon])]
+    : [...c.origins.map(o => [o.lat, o.lon]), ...c.divAirports.map(d => [d.lat, d.lon]),
+       ...c.mainDest.map(d => [d.lat, d.lon]), ...c.otherDests.map(d => [d.lat, d.lon])];
+  if (pts.length > 0) map.fitBounds(L.latLngBounds(pts).pad(0.1), { animate: true, duration: 0.4 });
+
+  renderSidebar(c, arcs);
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────────────────────────
+// Builds the sidebar content for the selected cluster and view mode.
+// Airline counts and destination table update dynamically based on the active arc set
+// so they always reflect what is shown on the map, not the full cluster totals.
+function renderSidebar(c, activeArcs) {
+  const scopeClass = { local: 'scope-local', regional: 'scope-regional', wide: 'scope-wide' }[c.scope];
+
+  // Airline counts from active arc set only — sidebar updates with the view
+  const alCounts = {};
+  for (const arc of activeArcs) alCounts[arc.airline] = (alCounts[arc.airline] || 0) + 1;
+  const alSorted = c.airlines
+    .map(a => ({ ...a, activeCount: alCounts[a.code] || 0 }))
+    .filter(a => a.activeCount > 0)
+    .sort((a, b) => b.activeCount - a.activeCount);
+  const maxAl = alSorted[0]?.activeCount || 1;
+
+  const alRows = alSorted.map(a => `
+    <div class="al-row">
+      <div class="al-dot" style="background:${a.color}"></div>
+      <span class="al-name">${a.name || a.code}</span>
+      <div class="al-bar-wrap"><div class="al-bar" style="width:${(a.activeCount/maxAl)*100}%;background:${a.color}"></div></div>
+      <span class="al-count">${a.activeCount}</span>
+    </div>`).join('');
+
+  // Destination breakdown — dest view shows single-row summary, system shows full table
+  const tableData = currentView === 'dest'
+    ? [{ Dest: c.dest, num_diversions: activeArcs.length, common_diversion: c.primaryDivAirport }]
+    : c.destTable;
+  const maxDt = tableData[0]?.num_diversions || 1;
+  const dtRows = tableData.map(r => `
+    <div class="dt-row">
+      <span class="dt-code">${r.Dest}</span>
+      <div class="dt-bar-wrap"><div class="dt-bar" style="width:${(r.num_diversions/maxDt)*100}%"></div></div>
+      <span class="dt-count">${r.num_diversions}</span>
+      <span class="dt-div">→${r.common_diversion}</span>
+    </div>`).join('');
+
+  const contextHtml = currentView === 'dest'
+    ? `<div class="view-context"><strong>${activeArcs.length.toLocaleString()} flights</strong> were headed to <strong>${c.dest}</strong> and diverted during this window. This view shows only those routes and where they actually landed.</div>`
+    : `<div class="view-context"><strong>${c.totalDiversions.toLocaleString()} total diversions</strong> system-wide during this period. <strong>${c.pctToMain.toFixed(1)}%</strong> were headed to ${c.dest} — the remaining arcs show concurrent network disruption.</div>`;
+
+  document.getElementById('sidebar-scroll').innerHTML = `
+    <div class="sec-lbl">Cluster Summary</div>
+    ${contextHtml}
+    <div class="cluster-card">
+      <div class="dest-code">${c.dest}</div>
+      <div class="dest-sub">Primary Affected Destination</div>
+      <div class="date-range">${c.start} → ${c.end}</div>
+      <div class="kv"><span class="kk">Flights to ${c.dest} diverted</span><span class="vv big">${c.destDiversions.toLocaleString()}</span></div>
+      <div class="kv"><span class="kk">System-wide total</span><span class="vv">${c.totalDiversions.toLocaleString()}</span></div>
+      <div class="kv"><span class="kk">Other destinations affected</span><span class="vv">${c.otherDiversions.toLocaleString()}</span></div>
+      <div class="kv"><span class="kk">Unique destinations</span><span class="vv">${c.uniqueDests}</span></div>
+      <div class="kv"><span class="kk">Unique origins</span><span class="vv">${c.uniqueOrigins}</span></div>
+      <div class="kv"><span class="kk">Diversion airports used</span><span class="vv">${c.uniqueDivAirports}</span></div>
+      <div class="kv"><span class="kk">Primary diversion airport</span><span class="vv">${c.primaryDivAirport}</span></div>
+      <div class="kv"><span class="kk">% of system to ${c.dest}</span><span class="vv">${c.pctToMain.toFixed(1)}%</span></div>
+      <span class="scope-badge ${scopeClass}">${c.scopeLabel}</span>
+    </div>
+
+    <div class="sec-lbl">Airlines — ${currentView === 'dest' ? `Flights to ${c.dest}` : 'System-wide'}</div>
+    ${alRows}
+
+    <div class="sec-lbl" style="margin-top:14px">${currentView === 'dest' ? 'Diversion Breakdown' : 'Destinations Affected (top 10)'}</div>
+    <div style="font-size:9px;color:var(--muted);margin-bottom:6px;font-family:'Space Mono',monospace">CODE — COUNT — COMMON DIV AIRPORT</div>
+    ${dtRows}
+
+    <div class="sec-lbl" style="margin-top:14px">Map Layers</div>
+    ${['arcs','origins','diverts','dests'].map(k => `
+      <div class="toggle-row" onclick="toggleLayer('${k}')">
+        <div class="toggle-box ${layerVis[k] ? 'on' : ''}" id="tog-${k}">✓</div>
+        <span class="toggle-label">${{arcs:'Flight arcs',origins:'Origin airports',diverts:'Diversion airports',dests:'Intended destinations'}[k]}</span>
+      </div>`).join('')}
+  `;
+}
+
+// Toggles individual map layers (arcs, origins, diversion airports, destinations)
+// on and off without changing the selected cluster or view mode.
+function toggleLayer(key) {
+  layerVis[key] = !layerVis[key];
+  document.getElementById(`tog-${key}`).classList.toggle('on', layerVis[key]);
+  renderCluster(currentIdx);
+}
+
+// ── VIEW TOGGLE ───────────────────────────────────────────────────────────────
+// Switches between Dest Airport Only and System-Wide view modes.
+// Dest-only filters arcs to isMainDest === true from the JSON.
+// System-wide shows all flightArcs in the cluster window.
+function setView(mode) {
+  currentView = mode;
+  document.getElementById('vtab-dest').classList.toggle('active', mode === 'dest');
+  document.getElementById('vtab-system').classList.toggle('active', mode === 'system');
+  renderCluster(currentIdx);
+}
+
+// ── CLUSTER TABS ─────────────────────────────────────────────────────────────
+// Dynamically builds cluster tab buttons from the JSON — one per cluster event.
+// Tabs are labeled with the cluster number and primary destination airport code.
+function buildTabs() {
+  document.getElementById('cluster-tabs').innerHTML = CLUSTERS.map((c, i) => `
+    <button class="ctab ${i === 0 ? 'active' : ''}" onclick="selectCluster(${i})" id="ctab-${i}">
+      #${i+1} ${c.dest}
+    </button>`).join('');
+}
+
+function selectCluster(idx) {
+  currentIdx = idx;
+  document.querySelectorAll('.ctab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderCluster(idx);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+// Fetches clusters_data.json and initializes the map with the first cluster.
+// Must be served via a local server (python -m http.server 8000) — 
+// browsers block fetch() from file:// URLs.
+async function init() {
+  try {
+    CLUSTERS = await fetch('clusters_data.json').then(r => r.json());
+    buildTabs();
+    renderCluster(0);
+    setTimeout(() => document.getElementById('loading').classList.add('done'), 400);
+  } catch (e) {
+    document.querySelector('#loading p').textContent = 'Could not load clusters_data.json — run the export cell first, then serve via python -m http.server 8000';
+    console.error(e);
+  }
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
