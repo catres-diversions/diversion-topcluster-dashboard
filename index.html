@@ -19,7 +19,7 @@
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; overflow: hidden; }
 
 /* #app { display: grid; grid-template-rows: 54px 1fr; height: 100vh; } */
-#app { grid-template-rows: 58px 1fr; }
+#app { grid-template-rows: 60px 1fr; }
 
 /* ── HEADER ── */
 header {
@@ -73,7 +73,7 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
   min-height: 0;  max-height: calc(100vh - 72px); }
 
 .sec-lbl {
-  font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.2em;
+  font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.2em;
   text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
   padding-bottom: 5px; border-bottom: 1px solid var(--border);
 }
@@ -206,7 +206,7 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
     </div>
 
     <div id="view-toggle">
-      <button class="vtab active" id="vtab-dest" onclick="setView('dest')">→ At Mass Diversion Center</button>
+      <button class="vtab active" id="vtab-dest" onclick="setView('dest')">→ At the Mass Diversion Center</button>
       <button class="vtab" id="vtab-system" onclick="setView('system')">⊕ In the NAS</button>
     </div>
 
@@ -239,7 +239,7 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
         </div>
         <div id="mi-legend-system" style="display:none">
           <div class="mi-leg"><div class="mi-dot" style="background:#fbbf24;border:1.5px solid #f59e0b"></div> Planned destination (mass diversion center)</div>
-          <div class="mi-leg"><div class="mi-dot" style="background:#22c55e"></div> Other planned destination airports in the NAS</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#22c55e"></div> Other destinations with diverted flights</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diverted-to airports</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#94a3b8;opacity:0.7"></div> Origin airports</div>
           <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Origin-dest arc by airline color</div>
@@ -301,7 +301,7 @@ function renderCluster(idx) {
   document.getElementById('mi-arcs').textContent = arcs.length.toLocaleString();
   document.getElementById('mi-total').textContent = c.totalDiversions.toLocaleString();
   document.getElementById('mi-arcs-lbl').textContent =
-    currentView === 'dest' ? `Diverted flights originally scheduled to ${c.dest}` : 'Total diversions in the NAS';
+    currentView === 'dest' ? `Diverions originally scheduled to ${c.dest}` : 'Total diversions in the NAS';
   document.getElementById('mi-legend-dest').style.display   = currentView === 'dest'   ? 'block' : 'none';
   document.getElementById('mi-legend-system').style.display = currentView === 'system' ? 'block' : 'none';
 
@@ -320,7 +320,7 @@ function renderCluster(idx) {
       L.polyline(bezier(arc.oLat, arc.oLon, arc.dLat, arc.dLon), {
         color: arc.color, weight: 1, opacity: 0.35,
       }).bindTooltip(
-        `${arc.origin} → ${arc.diversion}<br>Intended: ${arc.intended}<br>${arc.airline}`,
+        `${arc.origin} → ${arc.diversion}<br>Originally planned dest: ${arc.intended}<br>${arc.airline}`,
         { sticky: true }
       ).addTo(arcLayer);
     }
@@ -458,18 +458,21 @@ function renderSidebar(c, activeArcs) {
       <div class="dest-code">${c.dest}</div>
       <div class="dest-sub">Mass Diversion Event Center (Planned Dest)</div>
       <div class="date-range">${c.start} → ${c.end}</div>
-      <div class="kv"><span class="kk">Total diversions originally scheduled to ${c.dest}</span><span class="vv big">${c.destDiversions.toLocaleString()}</span></div>
-      <div class="kv"><span class="kk">Total diversions in the NAS</span><span class="vv">${c.totalDiversions.toLocaleString()}</span></div>
-      <div class="kv"><span class="kk">Other destination airports affected</span><span class="vv">${c.otherDiversions.toLocaleString()}</span></div>
-      <div class="kv"><span class="kk">Unique destinations</span><span class="vv">${c.uniqueDests}</span></div>
-      <div class="kv"><span class="kk">Unique origins</span><span class="vv">${c.uniqueOrigins}</span></div>
-      <div class="kv"><span class="kk">Number of diverted-to airports</span><span class="vv">${c.uniqueDivAirports}</span></div>
-      <div class="kv"><span class="kk">Primary diverted-to airport</span><span class="vv">${c.primaryDivAirport}</span></div>
-      <div class="kv"><span class="kk">% of system to ${c.dest}</span><span class="vv">${c.pctToMain.toFixed(1)}%</span></div>
+      <div class="kv"><span class="kk"># diversions originally planned for ${c.dest}</span><span class="vv big">${c.destDiversions.toLocaleString()}</span></div>
+      
+      <div><div>
+      <div class="kv"><span class="kk"># diversions in the NAS</span><span class="vv">${c.totalDiversions.toLocaleString()}</span></div>
+      <div class="kv"><span class="kk">Share of all diversions originally planned for ${c.dest}</span><span class="vv">${c.pctToMain.toFixed(1)}%</span></div>
+      <div class="kv"><span class="kk"># destination airports affected (NAS)</span><span class="vv">${c.uniqueDests}</span></div>
+      <div class="kv"><span class="kk"># origin airports (NAS)</span><span class="vv">${c.uniqueOrigins}</span></div>
+      <div class="kv"><span class="kk"># diverted-to airports (NAS)</span><span class="vv">${c.uniqueDivAirports}</span></div>
+      <div class="kv"><span class="kk">Most common diverted-to airport (NAS)</span><span class="vv">${c.primaryDivAirport}</span></div>
+      
+
       <span class="scope-badge ${scopeClass}">${c.scopeLabel}</span>
     </div>
 
-    <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `# Diversions originally scheduled to ${c.dest}` : 'System-wide'}</div>
+    <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `of Diversions Originally Scheduled to ${c.dest}` : 'of Diversions across the NAS'}</div>
     ${alRows}
 
        
