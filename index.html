@@ -86,10 +86,10 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
   background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
   padding: 4px 8px; border-radius: 3px; margin-bottom: 10px; letter-spacing: 0.04em;
 }
-.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .kv:last-child { border: none; }
 .kk { color: var(--muted); }
-.kv .vv { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; }
+.kv .vv { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; }
 .vv.big { font-size: 26px; color: var(--accent); }
 
 .view-context {
@@ -228,7 +228,7 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
         </div>
         <div class="mi-stat">
           <span class="mi-val" id="mi-total">—</span>
-          <span class="mi-lbl">System-wide total</span>
+          <span class="mi-lbl">Total diversions in the NAS</span>
         </div>
         <div class="mi-divider"></div>
         <div id="mi-legend-dest">
@@ -446,6 +446,14 @@ function renderSidebar(c, activeArcs) {
   document.getElementById('sidebar-scroll').innerHTML = `
     <div class="sec-lbl">Cluster Summary</div>
     ${contextHtml}
+
+    <div class="sec-lbl" style="margin-top:14px">Map Layers</div>
+    ${['arcs','origins','diverts','dests'].map(k => `
+      <div class="toggle-row" onclick="toggleLayer('${k}')">
+        <div class="toggle-box ${layerVis[k] ? 'on' : ''}" id="tog-${k}">✓</div>
+        <span class="toggle-label">${{dests:'Planned destination airports', diverts:'Diverted-to airports',origins:'Origin airports',arcs:'Fight origin-destination arcs',}[k]}</span>
+      </div>`).join('')}
+
     <div class="cluster-card">
       <div class="dest-code">${c.dest}</div>
       <div class="dest-sub">Mass Diversion Event Center (Planned Dest)</div>
@@ -461,19 +469,14 @@ function renderSidebar(c, activeArcs) {
       <span class="scope-badge ${scopeClass}">${c.scopeLabel}</span>
     </div>
 
-    <div class="sec-lbl">Airlines — ${currentView === 'dest' ? `Flights to ${c.dest}` : 'System-wide'}</div>
+    <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `# Diversions originally scheduled to ${c.dest}` : 'System-wide'}</div>
     ${alRows}
 
     <div class="sec-lbl" style="margin-top:14px">${currentView === 'dest' ? 'Diversion Breakdown' : 'Destinations Affected (top 10)'}</div>
     <div style="font-size:9px;color:var(--muted);margin-bottom:6px;font-family:'Space Mono',monospace">CODE — COUNT — COMMON DIV AIRPORT</div>
     ${dtRows}
 
-    <div class="sec-lbl" style="margin-top:14px">Map Layers</div>
-    ${['arcs','origins','diverts','dests'].map(k => `
-      <div class="toggle-row" onclick="toggleLayer('${k}')">
-        <div class="toggle-box ${layerVis[k] ? 'on' : ''}" id="tog-${k}">✓</div>
-        <span class="toggle-label">${{arcs:'Flight arcs',origins:'Origin airports',diverts:'Diversion airports',dests:'Intended destinations'}[k]}</span>
-      </div>`).join('')}
+    
   `;
 }
 
