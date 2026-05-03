@@ -490,7 +490,7 @@ function selectCluster(idx) {
 // browsers block fetch() from file:// URLs.
 async function init() {
   try {
-    CLUSTERS = await fetch('clusters_data.json').then(r => r.json());
+    CLUSTERS = await fetch('./data/clusters_data.json').then(r => r.json());
     buildTabs();
     renderCluster(0);
     setTimeout(() => document.getElementById('loading').classList.add('done'), 400);
