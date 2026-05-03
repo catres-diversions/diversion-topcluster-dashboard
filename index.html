@@ -207,7 +207,7 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
 
     <div id="view-toggle">
       <button class="vtab active" id="vtab-dest" onclick="setView('dest')">→ At the Mass Diversion Center</button>
-      <button class="vtab" id="vtab-system" onclick="setView('system')">⊕ In the NAS</button>
+      <button class="vtab" id="vtab-system" onclick="setView('system')">⊕ In the Nationa Airspace System (NAS)</button>
     </div>
 
     <!-- <div class="cluster-tabs" id="cluster-tabs"></div> -->
@@ -463,13 +463,11 @@ function renderSidebar(c, activeArcs) {
       <div><div>
       <div class="kv"><span class="kk"># diversions in the NAS</span><span class="vv">${c.totalDiversions.toLocaleString()}</span></div>
       <div class="kv"><span class="kk">Share of all diversions originally planned for ${c.dest}</span><span class="vv">${c.pctToMain.toFixed(1)}%</span></div>
-      <div class="kv"><span class="kk"># destination airports affected (NAS)</span><span class="vv">${c.uniqueDests}</span></div>
-      <div class="kv"><span class="kk"># origin airports (NAS)</span><span class="vv">${c.uniqueOrigins}</span></div>
+      <div class="kv"><span class="kk"># destination airports impacted (NAS)</span><span class="vv">${c.uniqueDests}</span></div>
+      <div class="kv"><span class="kk">#  origin airports impacted (NAS)</span><span class="vv">${c.uniqueOrigins}</span></div>
       <div class="kv"><span class="kk"># diverted-to airports (NAS)</span><span class="vv">${c.uniqueDivAirports}</span></div>
       <div class="kv"><span class="kk">Most common diverted-to airport (NAS)</span><span class="vv">${c.primaryDivAirport}</span></div>
       
-
-      <span class="scope-badge ${scopeClass}">${c.scopeLabel}</span>
     </div>
 
     <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `of Diversions Originally Scheduled to ${c.dest}` : 'of Diversions across the NAS'}</div>
