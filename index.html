@@ -86,10 +86,10 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
   background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
   padding: 4px 8px; border-radius: 3px; margin-bottom: 10px; letter-spacing: 0.04em;
 }
-.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .kv:last-child { border: none; }
 .kk { color: var(--muted); }
-.kv .vv { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12px; }
+.kv .vv { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; }
 .vv.big { font-size: 24px; color: var(--accent); }
 
 .view-context {
@@ -468,7 +468,7 @@ function renderSidebar(c, activeArcs) {
       <div class="kv"><span class="kk"># diverted-to airports (NAS)</span><span class="vv">${c.uniqueDivAirports}</span></div>
       <div class="kv"><span class="kk">Most common diverted-to airport (NAS)</span><span class="vv">${c.primaryDivAirport}</span></div>
       
-    </div>
+    </div><div>
 
     <div class="sec-lbl">Operating Airlines ${currentView === 'dest' ? `of Diversions Originally Scheduled to ${c.dest}` : 'of Diversions across the NAS'}</div>
     ${alRows}
