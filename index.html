@@ -233,16 +233,16 @@ header .sub { font-size: 13px; color: var(--muted); margin-left: 4px; }
         <div class="mi-divider"></div>
         <div id="mi-legend-dest">
           <div class="mi-leg"><div class="mi-dot" style="background:#fbbf24;border:1.5px solid #f59e0b"></div> Planned destination (mass diversion center)</div>
-          <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diversion airports</div>
+          <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diverted-to airports</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#94a3b8;opacity:0.7"></div> Origin airports</div>
-          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Arc by airline color</div>
+          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Origin-dest arc by airline color</div>
         </div>
         <div id="mi-legend-system" style="display:none">
           <div class="mi-leg"><div class="mi-dot" style="background:#fbbf24;border:1.5px solid #f59e0b"></div> Planned destination (mass diversion center)</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#22c55e"></div> Other planned destination airports in the NAS</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#ef4444"></div> Diverted-to airports</div>
           <div class="mi-leg"><div class="mi-dot" style="background:#94a3b8;opacity:0.7"></div> Origin airports</div>
-          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Origin-dest arc pair by airline color</div>
+          <div class="mi-leg"><div class="mi-line" style="background:rgba(148,163,184,0.5)"></div> Origin-dest arc by airline color</div>
         </div>
       </div>
     </div>
@@ -301,7 +301,7 @@ function renderCluster(idx) {
   document.getElementById('mi-arcs').textContent = arcs.length.toLocaleString();
   document.getElementById('mi-total').textContent = c.totalDiversions.toLocaleString();
   document.getElementById('mi-arcs-lbl').textContent =
-    currentView === 'dest' ? `Flights to ${c.dest}` : 'System-wide arcs';
+    currentView === 'dest' ? `Diverted flights originally scheduled to ${c.dest}` : 'none';
   document.getElementById('mi-legend-dest').style.display   = currentView === 'dest'   ? 'block' : 'none';
   document.getElementById('mi-legend-system').style.display = currentView === 'system' ? 'block' : 'none';
 
@@ -451,7 +451,7 @@ function renderSidebar(c, activeArcs) {
     ${['arcs','origins','diverts','dests'].map(k => `
       <div class="toggle-row" onclick="toggleLayer('${k}')">
         <div class="toggle-box ${layerVis[k] ? 'on' : ''}" id="tog-${k}">✓</div>
-        <span class="toggle-label">${{dests:'Planned destination airports', diverts:'Diverted-to airports',origins:'Origin airports',arcs:'Fight origin-destination arcs',}[k]}</span>
+        <span class="toggle-label">${{dests:'Planned destination airports', diverts:'Diverted-to airports',origins:'Origin airports',arcs:'Flight origin-destination arcs',}[k]}</span>
       </div>`).join('')}
 
     <div class="cluster-card">
