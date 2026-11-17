@@ -260,6 +260,16 @@ const map = L.map('map', {
   zoom: 9,
   zoomControl: true
 });
+const US_BOUNDS = L.latLngBounds(
+  [24.0, -125.0],
+  [50.0, -66.0]
+);
+
+map.fitBounds(US_BOUNDS, {
+  padding: [20, 20],
+  maxZoom: 6,
+  animate: false
+});
 
 L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
@@ -402,7 +412,11 @@ function renderCluster(idx) {
        ...c.divAirports.filter(d => activeDivSet.has(d.code)).map(d => [d.lat, d.lon])]
     : [...c.origins.map(o => [o.lat, o.lon]), ...c.divAirports.map(d => [d.lat, d.lon]),
        ...c.mainDest.map(d => [d.lat, d.lon]), ...c.otherDests.map(d => [d.lat, d.lon])];
-  if (pts.length > 0) map.fitBounds(L.latLngBounds(pts).pad(0.1), { animate: true, duration: 0.4 });
+  if (pts.length > 0) map.fitBounds(US_BOUNDS, {
+  padding: [20, 20],
+  maxZoom: 6,
+  animate: false
+});
 
   renderSidebar(c, arcs);
 
