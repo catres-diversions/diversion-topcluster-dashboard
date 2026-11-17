@@ -257,14 +257,18 @@ const layerVis = { arcs: true, origins: true, diverts: true, dests: true };
 
 const map = L.map('map', {
   center: [38.5, -95],
-  zoom: 4,
+  zoom: 9,
   zoomControl: true
 });
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors',
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 19,
+    opacity: 1
+  }
+).addTo(map);
 
 let arcLayer    = L.layerGroup().addTo(map);
 let markerLayer = L.layerGroup().addTo(map);
