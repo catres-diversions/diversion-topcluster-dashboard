@@ -255,10 +255,15 @@ let currentIdx = 0;
 let currentView = 'dest';
 const layerVis = { arcs: true, origins: true, diverts: true, dests: true };
 
-const map = L.map('map', { center: [38.5, -95], zoom: 4, zoomControl: true });
-// L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 18
+const map = L.map('map', {
+  center: [38.5, -95],
+  zoom: 4,
+  zoomControl: true
+});
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19
 }).addTo(map);
 
 let arcLayer    = L.layerGroup().addTo(map);
@@ -530,12 +535,12 @@ function selectCluster(idx) {
 // browsers block fetch() from file:// URLs.
 async function init() {
   try {
-    CLUSTERS = await fetch('./data/clusters_data.json').then(r => r.json());
+    CLUSTERS = await fetch('./data/clusters_data_20261116.json').then(r => r.json());
     buildTabs();
     renderCluster(0);
     setTimeout(() => document.getElementById('loading').classList.add('done'), 400);
   } catch (e) {
-    document.querySelector('#loading p').textContent = 'Could not load clusters_data.json — run the export cell first, then serve via python -m http.server 8000';
+    document.querySelector('#loading p').textContent = 'Could not load clusters_data_20261116.json — run the export cell first, then serve via python -m http.server 8000';
     console.error(e);
   }
 }
